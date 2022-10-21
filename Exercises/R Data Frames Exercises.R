@@ -1,7 +1,7 @@
 # ex 1
 age <- c(22, 25, 26)
 weight <- c(150, 165, 120)
-sex <- c("M", "M", "F")
+sex <- factor(c("M", "M", "F"))
 
 df_students <- data.frame(age, weight, sex, row.names = c("Sam", "Frank", "Amy"))
 print(df_students)
