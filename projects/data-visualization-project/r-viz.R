@@ -1,6 +1,7 @@
 packages <- c(
-    "dplyr", 
-    "ggplot2", 
+    "dplyr",
+    "ggplot2",
+    "plotly",
     "data.table",
     "readr"
 )
@@ -28,8 +29,8 @@ glimpse(df)
 summary(df)
 
 pl <- df %>% 
-    ggplot(aes(x = CPI, y = HDI)) +
-    geom_point(aes(color = Region), size = 4) +
+    ggplot(aes(x = CPI, y = HDI, text = paste("Country:", Country))) +
+    geom_point(aes(color = Region), size = 3) +
     geom_smooth(aes(group = 1), 
                 color = "red", 
                 se = F, 
@@ -43,5 +44,7 @@ pl <- df %>%
                        breaks = seq(0.2, 1, 0.1)) +
     ggtitle("Corruption and human development") + 
     theme_bw()
-pl
-          
+
+gpl <- ggplotly(pl, )
+
+print(gpl)
