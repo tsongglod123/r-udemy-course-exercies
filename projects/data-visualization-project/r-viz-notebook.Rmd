@@ -1,0 +1,76 @@
+---
+title: "Data visualization project"
+output: html_notebook
+---
+
+Import necessary packages
+
+```{r}
+packages <- c(
+    "dplyr",
+    "ggplot2",
+    "plotly",
+    "data.table",
+    "readr"
+)
+
+lapply(packages, require, character.only = T)
+```
+
+Import the economist data
+
+```{r}
+df <- read_csv("datasets/Economist_Assignment_Data.csv")
+
+# drop first column
+df <- df[, -1]
+```
+
+Explore the data
+
+```{r}
+head(df)
+glimpse(df)
+summary(df)
+```
+
+Transform the data
+
+```{r}
+df <- df %>% mutate(Country = factor(Country), Region = factor(Region))
+```
+
+Check data after tranform
+
+```{r}
+head(df)
+glimpse(df)
+summary(df)
+```
+
+Plot graph from the data
+
+```{r}
+pl <- df %>% 
+    ggplot(aes(x = CPI, y = HDI, text = paste("Country:", Country))) +
+    geom_point(aes(color = Region), size = 3) +
+    geom_smooth(aes(group = 1), 
+                color = "red", 
+                se = F, 
+                method = "lm", 
+                formula = y ~ log(x)) +
+    scale_x_continuous(name = "Corruption Perceptions Index, 2011 (10 = least corrupt)", 
+                       limits = c(1, 10), 
+                       breaks = 1:10) +
+    scale_y_continuous(name = "Human Development Index, 2011 (1 = best)",
+                       limits = c(0.2, 1),
+                       breaks = seq(0.2, 1, 0.1)) +
+    ggtitle("Corruption and human development") + 
+    theme_bw()
+```
+
+Create an interactive graph
+
+```{r}
+ggplotly(pl)
+```

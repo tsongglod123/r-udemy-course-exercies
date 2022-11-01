@@ -45,6 +45,6 @@ pl <- df %>%
     ggtitle("Corruption and human development") + 
     theme_bw()
 
-gpl <- ggplotly(pl, )
+gpl <- ggplotly(pl)
 
 print(gpl)
