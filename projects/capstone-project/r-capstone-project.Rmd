@@ -1,0 +1,154 @@
+---
+title: "Capstone project"
+output: html_notebook
+---
+
+Import batting dataset
+
+```{r}
+batting <- read.csv("datasets/Batting.csv", stringsAsFactors = T)
+```
+
+Check head
+
+```{r}
+head(batting)
+```
+
+Check the structure of dataset
+
+```{r}
+str(batting)
+```
+
+```{r}
+summary(batting)
+```
+
+```{r}
+head(batting$AB)
+```
+
+```{r}
+head(batting$X2B)
+```
+
+```{r}
+batting$BA <- batting$H/batting$AB
+```
+
+```{r}
+tail(batting$BA, 5)
+```
+
+Create a new column, 1B (Singles)
+
+```{r}
+batting$X1B <- batting$H - batting$X2B - batting$X3B - batting$HR
+```
+
+Create a new column, OBP (On-base percentage)
+
+```{r}
+batting$OBP <- (batting$H + batting$BB + batting$HBP)/(batting$AB + batting$BB + batting$HBP + batting$SF)
+```
+
+Create a new column, SLG (Slugging percentage)
+
+```{r}
+batting$SLG <- (batting$X1B + (2 * batting$X2B) + (3 * batting$X3B) + (4 * batting$HR))/batting$AB
+```
+
+```{r}
+str(batting)
+```
+
+Import salaries dataset
+
+```{r}
+sal <- read.csv("datasets/Salaries.csv", stringsAsFactors = T)
+```
+
+```{r}
+summary(sal)
+```
+
+```{r}
+summary(batting)
+```
+
+```{r}
+batting <- subset(batting, yearID >= 1985)
+```
+
+```{r}
+summary(batting)
+```
+
+```{r}
+combo <- merge(batting, sal, by = c("playerID", "yearID"))
+```
+
+```{r}
+summary(combo)
+```
+
+```{r}
+lost_players <- subset(combo, playerID %in% c("giambja01", "damonjo01", "saenzol01"))
+lost_players
+```
+
+```{r}
+lp_2001 <- subset(lost_players, yearID == 2001)
+col <- c("playerID", "H", "X2B", "X3B", "HR", "OBP", "SLG", "BA", "AB")
+lp_2001 <- lp_2001[, col]
+lp_2001
+```
+
+```{r}
+head(lost_players)
+```
+
+## **Replacement Players**
+
+Now we have all the information we need! Here is your final task - Find Replacement Players for the key three players we lost! However, you have three constraints:
+
+-   The total combined salary of the three players can not exceed 15 million dollars.
+
+-   Their combined number of At Bats (AB) needs to be equal to or greater than the lost players.
+
+-   Their mean OBP had to equal to or greater than the mean OBP of the lost players
+
+```{r}
+lp_total_AB <- sum(lp_2001$AB)
+lp_total_AB
+```
+
+```{r}
+max_salary <- 15000000
+max_salary
+```
+
+```{r}
+lp_avg_OBP <- mean(lp_2001$OBP)
+lp_avg_OBP
+```
+
+```{r}
+combo_2001 <- subset(combo, yearID == 2001 & OBP > 0)
+str(combo_2001)
+```
+
+```{r}
+combo_2001 <- subset(combo_2001, AB >= lp_total_AB/3 & salary < max_salary/3 & OBP >= lp_avg_OBP)
+str(combo_2001)
+```
+
+```{r}
+library(dplyr)
+```
+
+```{r}
+options <- arrange(combo_2001, desc(OBP))
+options[, c("playerID", "OBP", "AB", "salary")]
+```
