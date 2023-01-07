@@ -1,0 +1,102 @@
+---
+title: "Linear Regression"
+output: html_notebook
+---
+
+```{r}
+library(corrgram)
+library(corrplot)
+library(dplyr)
+library(caTools)
+
+# Set a seed
+set.seed(101)
+```
+
+```{r}
+df <- read.csv('datasets/student-mat.csv', stringsAsFactors = T, sep = ';')
+head(df)
+```
+
+```{r}
+summary(df)
+```
+
+```{r}
+any(is.na(df))
+```
+
+```{r}
+str(df)
+```
+
+```{r}
+# Numeric columns
+num.cols <- sapply(df, is.numeric)
+
+# Filter
+cor.data <- cor(df[, num.cols])
+
+corrplot(cor.data, method = 'color')
+```
+
+```{r}
+corrgram(df)
+```
+
+```{r}
+# Split sample
+sample <- sample.split(Y = df$G3, SplitRatio = 0.7)
+# 70% of data -> train
+train <- subset(df, sample == T)
+# 30% of data -> test
+test <- subset(df, sample == F)
+```
+
+```{r}
+# Train and build model
+model <- lm(G3 ~ ., data = train)
+summary(model)
+```
+
+```{r}
+# Predictions
+G3.predictions <- predict(model, test)
+
+results <- cbind(G3.predictions, test$G3)
+colnames(results) <- c('predicted', 'actual')
+
+results <- as.data.frame(results)
+
+head(results)
+```
+
+```{r}
+summary(results)
+# negative value is not make sense
+```
+
+```{r}
+to_zero <- function(x) ifelse(x < 0, 0, x)
+```
+
+```{r}
+# Apply function
+results$predicted <- sapply(results$predicted, to_zero)
+```
+
+```{r}
+summary(results)
+```
+
+```{r}
+rsq <- function(actual, pred) {
+    RSS <- sum((actual - pred)^2)
+    TSS <- sum((actual - mean(df$G3))^2)
+    return(1 - (RSS/TSS))
+}
+```
+
+```{r}
+rsq(results$actual, results$predicted)
+```
