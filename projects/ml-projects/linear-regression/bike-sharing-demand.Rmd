@@ -1,0 +1,111 @@
+---
+title: "Bike Sharing Demand"
+output: html_notebook
+---
+
+```{r}
+library(corrgram)
+library(corrplot)
+library(dplyr)
+library(caTools)
+library(ggplot2)
+
+# Set a seed
+set.seed(101)
+```
+
+```{r}
+# Load datasets
+
+train <- read.csv('datasets/train.csv')
+test <- read.csv('datasets/test.csv')
+```
+
+```{r}
+# Check NA
+
+any(is.na(train))
+```
+
+```{r}
+# Convert to POSIXct 
+
+train$datetime <- as.POSIXct(train$datetime)
+test$datetime <- as.POSIXct(test$datetime)
+```
+
+```{r}
+str(train)
+```
+
+```{r}
+head(train)
+```
+
+```{r}
+# Scatter plot
+
+ggplot(train, aes(datetime, count)) +
+    geom_point(aes(color = temp), alpha = 0.5) +
+    scale_color_continuous(low = 'green', high = 'red') +
+    theme_bw()
+```
+
+```{r}
+# Check correlation
+
+num.cols <- sapply(train, is.numeric)
+
+cor.data <- cor(train[, num.cols])
+
+corrplot(cor.data, method = 'color')
+```
+
+```{r}
+# Box plot
+
+ggplot(train, aes(factor(season), count)) +
+    geom_boxplot(aes(color = factor(season))) +
+    theme_bw()
+```
+
+```{r}
+# Feature engineering
+
+get_hour <- function(x) format(x, '%H')
+
+train$hour <- sapply(train$datetime, get_hour)
+train$hour <- sapply(train$hour, as.numeric)
+```
+
+```{r}
+head(train)
+```
+
+```{r}
+# Bike rental in working day based on hour
+
+gradient.colors <- c('darkblue', 'skyblue', 'green', 'yellow', 'orange', 'red')
+
+ggplot(filter(train, workingday == 1), aes(hour, count)) + 
+    geom_point(position = position_jitter(width = 1, height = 0), aes(color = temp)) +
+    scale_color_gradientn(colors = gradient.colors) +
+    theme_bw()
+```
+
+```{r}
+# Bike rental in not working day based on hour
+
+ggplot(filter(train, workingday == 0), aes(hour, count)) + 
+    geom_point(position = position_jitter(width = 1, height = 0), aes(color = temp)) +
+    scale_color_gradientn(colors = gradient.colors) +
+    theme_bw()
+```
+
+```{r}
+# Build model
+
+model <- lm(count ~ . - datetime - atemp - registered - casual, train)
+
+summary(model)
+```
