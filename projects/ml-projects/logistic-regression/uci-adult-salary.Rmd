@@ -1,0 +1,97 @@
+---
+title: "UCI adult"
+output: html_notebook
+---
+
+## Get the Data
+
+```{r}
+df <- read.csv('datasets/adult_sal.csv', stringsAsFactors = T)
+head(df)
+```
+
+```{r}
+str(df)
+```
+
+```{r}
+summary(df)
+```
+
+```{r}
+library(dplyr)
+
+df <- select(df, -X)
+str(df)
+```
+
+## Data Cleaning
+
+```{r}
+table(df$type_employer)
+```
+
+```{r}
+df %>% count(type_employer, sort = T)
+```
+
+```{r warning=FALSE}
+library(stringr)
+
+# Combine Without-pay and Never-worked to Unemployed
+df <- df %>% mutate(type_employer = str_replace(
+    type_employer,
+    pattern = 'Without-pay|Never-worked',
+    replacement = 'Unemployed'))
+
+# Combine State and Local gov jobs into a category called SL-gov 
+df <- df %>% mutate(type_employer = str_replace(
+    type_employer,
+    pattern = 'State|Local',
+    replacement = 'SL'))
+
+# Combine self-employed jobs into a category called Self-emp.
+df <- df %>% mutate(type_employer = str_replace(
+    type_employer,
+    pattern = '-not-inc|-inc',
+    replacement = ''))
+```
+
+```{r}
+df %>% count(type_employer, sort = T)
+```
+
+```{r}
+# Reduce marital column to three groups:
+# Married
+# Not-Married
+# Never-Married
+
+table(df$marital)
+```
+
+```{r}
+# Married
+df <- df %>% mutate(marital = str_replace(
+    marital,
+    pattern = '-AF-spouse|-civ-spouse|-spouse-absent',
+    replacement = ''))
+
+# Not-Married
+df <- df %>% mutate(marital = str_replace(
+    marital,
+    pattern = 'Separated|Widowed|Divorced',
+    replacement = 'Not-married'))
+
+# Not-Married no need to modified
+```
+
+```{r}
+df %>% count(marital, sort = T)
+```
+
+## Missing Data
+
+```{r}
+library(Amelia)
+```
