@@ -4,5 +4,152 @@ output: html_notebook
 ---
 
 ```{r}
+df <- read.csv('datasets/titanic_train.csv', stringsAsFactors = T)
+head(df)
+```
 
+```{r}
+str(df)
+```
+
+```{r}
+summary(df)
+```
+
+```{r}
+library(Amelia)
+```
+
+```{r}
+missmap(df, main = 'Missing Map', col = c('red', 'grey'), legend = T)
+```
+
+```{r}
+library(ggplot2)
+```
+
+```{r}
+ggplot(df, aes(Survived)) + 
+    geom_bar(aes(fill = factor(Survived))) + 
+    theme_bw()
+```
+
+```{r}
+ggplot(df, aes(Pclass)) + 
+    geom_bar(aes(fill = factor(Pclass))) +
+    theme_bw()
+```
+
+```{r}
+ggplot(df, aes(Sex)) + 
+    geom_bar(aes(fill = Sex)) +
+    theme_bw()
+```
+
+```{r}
+ggplot(df, aes(Age)) + 
+    geom_histogram(bins = 20) +
+    theme_bw()
+```
+
+```{r}
+ggplot(df, aes(Fare)) + 
+    geom_histogram(bins = 20) +
+    theme_bw()
+```
+
+```{r}
+ggplot(df, aes(Pclass, Age)) + 
+    geom_boxplot(aes(group = Pclass, fill = factor(Pclass))) +
+    scale_y_continuous(breaks = seq(0, 80, by = 5)) +
+    theme_bw()
+```
+
+```{r}
+avg.ages <- c()
+for (i in 1:max(df$Pclass)) {
+    avg.ages <- append(
+        avg.ages, 
+        floor(mean(df[df$Pclass == i, 'Age'], na.rm = T))
+    )
+}
+names(avg.ages) <- c(1:max(df$Pclass))
+avg.ages
+```
+
+```{r}
+# Imputation of age based on class
+impute_age <- function(age, class) {
+    val <- age
+    for (i in 1:length(age)) {
+        if (is.na(age[i])) val[i] <- avg.ages[class[i]]
+    }
+    return(val)
+}
+```
+
+```{r}
+fixed.ages <- impute_age(df$Age, df$Pclass)
+df$Age <- fixed.ages
+```
+
+```{r}
+missmap(df, main = 'Imputation Check', col = c('red', 'grey'), legend = T)
+```
+
+```{r}
+library(dplyr)
+```
+
+```{r}
+df.train <- select(df, -PassengerId, -Name, -Ticket, -Cabin)
+head(df.train)
+```
+
+```{r}
+str(df.train)
+```
+
+```{r}
+df.train$Survived <- factor(df.train$Survived)
+df.train$Pclass <- factor(df.train$Pclass)
+```
+
+```{r}
+str(df.train)
+```
+
+```{r}
+library(caTools)
+
+set.seed(101)
+```
+
+```{r}
+split <- sample.split(df.train$Survived, SplitRatio = 0.7)
+train <- subset(df.train, split == T)
+test <- subset(df.train, split == F)
+```
+
+```{r}
+log.model <- glm(Survived ~., family = binomial(link = 'logit'), data = train)
+summary(log.model)
+```
+
+```{r}
+fitted.prob <- predict(log.model, test, type = 'response')
+fitted.results <- ifelse(fitted.prob > 0.5, 1, 0)
+```
+
+```{r}
+mis.class.err <- mean(fitted.results != test$Survived)
+```
+
+```{r}
+print(1 - mis.class.err)
+```
+
+```{r}
+# Confusion matrix
+table(test$Survived, fitted.prob > 0.5)
 ```
