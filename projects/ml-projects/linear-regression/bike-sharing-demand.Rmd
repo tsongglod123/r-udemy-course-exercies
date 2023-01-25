@@ -3,7 +3,7 @@ title: "Bike Sharing Demand"
 output: html_notebook
 ---
 
-```{r}
+```{r warning=FALSE}
 library(corrgram)
 library(corrplot)
 library(dplyr)
@@ -17,8 +17,8 @@ set.seed(101)
 ```{r}
 # Load datasets
 
-train <- read.csv('datasets/train.csv')
-test <- read.csv('datasets/test.csv')
+train <- read.csv("datasets/train.csv")
+test <- read.csv("datasets/test.csv")
 ```
 
 ```{r}
@@ -58,7 +58,7 @@ num.cols <- sapply(train, is.numeric)
 
 cor.data <- cor(train[, num.cols])
 
-corrplot(cor.data, method = 'color')
+corrplot(cor.data, method = "color")
 ```
 
 ```{r}
@@ -72,7 +72,7 @@ ggplot(train, aes(factor(season), count)) +
 ```{r}
 # Feature engineering
 
-get_hour <- function(x) format(x, '%H')
+get_hour <- function(x) format(x, "%H")
 
 train$hour <- sapply(train$datetime, get_hour)
 train$hour <- sapply(train$hour, as.numeric)
@@ -85,7 +85,7 @@ head(train)
 ```{r}
 # Bike rental in working day based on hour
 
-gradient.colors <- c('darkblue', 'skyblue', 'green', 'yellow', 'orange', 'red')
+gradient.colors <- c("darkblue", "skyblue", "green", "yellow", "orange", "red")
 
 ggplot(filter(train, workingday == 1), aes(hour, count)) + 
     geom_point(position = position_jitter(width = 1, height = 0), aes(color = temp)) +

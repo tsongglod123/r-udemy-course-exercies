@@ -90,8 +90,20 @@ df <- df %>% mutate(marital = str_replace(
 df %>% count(marital, sort = T)
 ```
 
-## Missing Data
+```{r}
+table(df$country)
+```
 
 ```{r}
+unique(df$country)
+```
+
+```{r}
+
+```
+
+## Missing Data
+
+```{r warning=FALSE}
 library(Amelia)
 ```
