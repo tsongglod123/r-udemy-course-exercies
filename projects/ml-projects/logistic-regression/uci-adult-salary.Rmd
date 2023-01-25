@@ -3,10 +3,24 @@ title: "UCI adult"
 output: html_notebook
 ---
 
-## Get the Data
+# Import necessary libraries
+
+```{r warning=FALSE}
+library(Amelia)
+library(dplyr)
+library(stringr)
+library(corrplot)
+library(ggplot2)
+library(caTools)
+library(caret)
+
+theme_set(theme_bw())
+```
+
+# Import dataset
 
 ```{r}
-df <- read.csv('datasets/adult_sal.csv', stringsAsFactors = T)
+df <- read.csv("datasets/adult_sal.csv", stringsAsFactors = T)
 head(df)
 ```
 
@@ -19,13 +33,23 @@ summary(df)
 ```
 
 ```{r}
-library(dplyr)
-
 df <- select(df, -X)
 str(df)
 ```
 
-## Data Cleaning
+# Inspect dataset
+
+```{r}
+# Numeric columns
+num.cols <- sapply(df, is.numeric)
+
+# Filter
+cor.data <- cor(df[, num.cols])
+
+corrplot(cor.data, method = "color")
+```
+
+# Data cleaning
 
 ```{r}
 table(df$type_employer)
@@ -35,26 +59,24 @@ table(df$type_employer)
 df %>% count(type_employer, sort = T)
 ```
 
-```{r warning=FALSE}
-library(stringr)
-
+```{r}
 # Combine Without-pay and Never-worked to Unemployed
 df <- df %>% mutate(type_employer = str_replace(
     type_employer,
-    pattern = 'Without-pay|Never-worked',
-    replacement = 'Unemployed'))
+    pattern = "Without-pay|Never-worked",
+    replacement = "Unemployed"))
 
 # Combine State and Local gov jobs into a category called SL-gov 
 df <- df %>% mutate(type_employer = str_replace(
     type_employer,
-    pattern = 'State|Local',
-    replacement = 'SL'))
+    pattern = "State|Local",
+    replacement = "SL"))
 
 # Combine self-employed jobs into a category called Self-emp.
 df <- df %>% mutate(type_employer = str_replace(
     type_employer,
-    pattern = '-not-inc|-inc',
-    replacement = ''))
+    pattern = "-not-inc|-inc",
+    replacement = ""))
 ```
 
 ```{r}
@@ -74,14 +96,14 @@ table(df$marital)
 # Married
 df <- df %>% mutate(marital = str_replace(
     marital,
-    pattern = '-AF-spouse|-civ-spouse|-spouse-absent',
-    replacement = ''))
+    pattern = "-AF-spouse|-civ-spouse|-spouse-absent",
+    replacement = ""))
 
 # Not-Married
 df <- df %>% mutate(marital = str_replace(
     marital,
-    pattern = 'Separated|Widowed|Divorced',
-    replacement = 'Not-married'))
+    pattern = "Separated|Widowed|Divorced",
+    replacement = "Not-married"))
 
 # Not-Married no need to modified
 ```
@@ -95,15 +117,76 @@ table(df$country)
 ```
 
 ```{r}
-unique(df$country)
+str(df)
+```
+
+```{r}
+# ? will treat like NA
+df[df == "?"] <- NA
+```
+
+```{r}
+df$type_employer <- sapply(df$type_employer, factor)
+df$marital <- sapply(df$marital, factor)
+df <- df[, !(names(df) %in% c("country"))]
+```
+
+```{r}
+colSums(is.na(df))[colSums(is.na(df)) > 0]
+```
+
+```{r}
+missmap(df, main = "Missing Map", col = c("red", "grey"), legend = T)
+```
+
+```{r}
+# Drop NA values
+df <- na.omit(df)
+```
+
+# EDA & Visualization
+
+```{r}
+df %>% ggplot(aes(x = age)) +
+    geom_histogram(aes(fill = income), binwidth = 1)
+```
+
+# Train model
+
+```{r}
+set.seed(101)
+```
+
+```{r}
+sample <- sample.split(df$income, SplitRatio = 0.7)
+
+df.train <- subset(df, sample == T)
+df.test <- subset(df, sample == F)
+```
+
+```{r}
+model <- glm(income ~ ., family = binomial(link = "logit"), data = df.train)
+```
+
+```{r}
+summary(model)
+```
+
+```{r}
+df.test$predicted <- predict(model, newdata = df.test, type = "response")
+
+df.test$predicted <- sapply(
+    df.test$predicted, 
+    function(x) ifelse(x > 0.5, yes = ">50K", no = "<=50K")
+)
+```
+
+```{r}
+table(df.test$income, df.test$predicted)
 ```
 
 ```{r}
 
-```
-
-## Missing Data
-
-```{r warning=FALSE}
-library(Amelia)
+cfm <- confusionMatrix(data = factor(df.test$predicted), reference = df.test$income)
+cfm
 ```

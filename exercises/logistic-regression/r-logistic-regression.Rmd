@@ -3,8 +3,17 @@ title: "Logistic Regression"
 output: html_notebook
 ---
 
+```{r warning=FALSE}
+library(Amelia)
+library(ggplot2)
+library(dplyr)
+library(caTools)
+
+set.seed(101)
+```
+
 ```{r}
-df <- read.csv('datasets/titanic_train.csv', stringsAsFactors = T)
+df <- read.csv("datasets/titanic_train.csv", stringsAsFactors = T)
 head(df)
 ```
 
@@ -17,15 +26,7 @@ summary(df)
 ```
 
 ```{r}
-library(Amelia)
-```
-
-```{r}
-missmap(df, main = 'Missing Map', col = c('red', 'grey'), legend = T)
-```
-
-```{r}
-library(ggplot2)
+missmap(df, main = "Missing Map", col = c("red", "grey"), legend = T)
 ```
 
 ```{r}
@@ -70,7 +71,7 @@ avg.ages <- c()
 for (i in 1:max(df$Pclass)) {
     avg.ages <- append(
         avg.ages, 
-        floor(mean(df[df$Pclass == i, 'Age'], na.rm = T))
+        floor(mean(df[df$Pclass == i, "Age"], na.rm = T))
     )
 }
 names(avg.ages) <- c(1:max(df$Pclass))
@@ -94,11 +95,7 @@ df$Age <- fixed.ages
 ```
 
 ```{r}
-missmap(df, main = 'Imputation Check', col = c('red', 'grey'), legend = T)
-```
-
-```{r}
-library(dplyr)
+missmap(df, main = "Imputation Check", col = c("red", "grey"), legend = T)
 ```
 
 ```{r}
@@ -120,24 +117,18 @@ str(df.train)
 ```
 
 ```{r}
-library(caTools)
-
-set.seed(101)
-```
-
-```{r}
 split <- sample.split(df.train$Survived, SplitRatio = 0.7)
 train <- subset(df.train, split == T)
 test <- subset(df.train, split == F)
 ```
 
 ```{r}
-log.model <- glm(Survived ~., family = binomial(link = 'logit'), data = train)
+log.model <- glm(Survived ~., family = binomial(link = "logit"), data = train)
 summary(log.model)
 ```
 
 ```{r}
-fitted.prob <- predict(log.model, test, type = 'response')
+fitted.prob <- predict(log.model, test, type = "response")
 fitted.results <- ifelse(fitted.prob > 0.5, 1, 0)
 ```
 
